@@ -1,3 +1,22 @@
+# 2.0.7 — 알림 정확도 + 영어 번역 마무리 (2026-09-09, 완료)
+
+- [x] 알림 시각 기본값 버그: `integer(forKey:)` 가 미저장 키에 0 을 줘서 설정은 09:00 을
+      보여주는데 실제 알림은 00:00 에 갔다 → `object(forKey:) != nil` 로 저장 여부 확인
+- [x] 전날 '장보기 좋은 날' 토글도 같은 버그(`bool(forKey:)` → false) → 기본 켜짐으로 교정
+- [x] iOS 알림 64개 상한: 가까운 날짜부터 60개까지만 등록하고 중단 (초과분은 OS 가 조용히 버림)
+- [x] `DontGoMartSpec.appStoreID = 6450679498` → LeeoSupportSection '리뷰 남기기' 가
+      시스템 팝업 대신 실제 리뷰 작성 페이지로
+- [x] 다국어: 영어 없던 84개 문자열 번역(후원·공유·커스텀 마트·접근성 라벨),
+      위젯 갤러리 이름·설명 8개 한국어 추가, 영어 13건 needs_review → translated,
+      ko 슬롯에 영어(defaultValue)가 들어가 있던 26건을 한국어 원문으로 교정
+- [x] 루트 `RELEASE_NOTES.md` 신설 — DeployBar 가 읽는 원본 (그동안 docs/ 에만 있어 못 읽었다)
+- [x] `deploy.env` 신설 — SCHEME=DontGoMart (폴더명 '돈꼬마트' 로 추정하면 아카이브 실패)
+- [x] 버전 2.0.6 → 2.0.7 (pbxproj 6곳 + Config/Version.xcconfig)
+- [x] DontGoMart / CalendarWidgetExtension 빌드 SUCCEEDED + TEST SUCCEEDED (iPhone 17 Pro)
+- [ ] 사람 작업: ASC 버전 생성 후 배포 (`DeployBar --reponotes 돈꼬마트 2.0.7` 로 문구 확인)
+
+---
+
 # App Store 리젝 2.1 대응 (3차) — 소모성 구매 시 사용 가능한 반응 추가 (2026-07-14, 진행 중)
 
 심사 지적: 소모성 3종(coffee/cake/meal) 구매 시 앱 내에서 '사용'되는 게 없어 보임.
