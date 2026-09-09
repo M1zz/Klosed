@@ -9,9 +9,21 @@ import Foundation
 import Testing
 import StoreKit
 import StoreKitTest
+import LeeoKit
 @testable import DontGoMart
 
 struct DontGoMartTests {
+
+    /// LeeoKit 계약(LeeoAppSpec)이 배포 가능한 상태인지.
+    ///
+    /// Preflight 는 "무료 모델인데 페이월을 선언했다", "privacyURL 이 https 가 아니다" 처럼
+    /// 컴파일은 되지만 심사·운영에서 터지는 모순을 잡는다. LeeoKit 을 올릴 때 계약이
+    /// 조용히 어긋나는 걸 여기서 막는다.
+    @Test func specIsReleasable() {
+        let issues = LeeoPreflight.audit(DontGoMartSpec.self)
+        let errors = issues.filter { $0.severity == .error }
+        #expect(errors.isEmpty, "계약 오류: \(errors.map(\.message).joined(separator: " / "))")
+    }
 
     /// 2·4주 수요일 휴무 규칙이 단일 엔진에서 올바른 날짜를 내는지.
     /// (구 generateBiweeklyTasks 테스트를 ClosureRuleEngine 기준으로 대체)

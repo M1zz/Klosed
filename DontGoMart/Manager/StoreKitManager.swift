@@ -37,11 +37,18 @@ enum SupporterManager {
     }
 
     /// 과거 비소비성 커피(레거시) 권한을 판정하는 공용 스토어.
-    /// StoreKit 2 의 `Transaction.currentEntitlements` 순회·서명 검증은 이제
+    /// StoreKit 2 의 `Transaction.currentEntitlements` 순회·서명 검증은
     /// LeeoKit 의 `LeeoStore` 가 담당한다. 여기서는 소유 여부만 읽어 쓴다.
     /// (소모성 팁은 아래 CoffeeTipStore 가 앱 고유 로직으로 계속 직접 처리한다.)
+    ///
+    /// 구성을 Spec 이 아니라 여기서 만드는 이유: 이 앱은 `.free` 라 페이월이 없다.
+    /// Spec 에 paywall 을 선언하면 "무료 모델인데 페이월이 있다" 는 모순이 되어
+    /// Preflight 가 오류로 잡는다. 이건 파는 화면이 아니라 옛 구매자를 알아보는 조회일 뿐이다.
     @MainActor
-    static let entitlementStore = LeeoStore(config: DontGoMartSpec.paywall!)
+    static let entitlementStore = LeeoStore(config: LeeoPaywallConfig(
+        productIDs: [legacyProductID],
+        cacheSuiteName: Utillity.appGroupId
+    ))
 
     /// 상품별 대표 이모지 (목록 행·구매 성공 연출 공용)
     static func emoji(for productID: String) -> String {

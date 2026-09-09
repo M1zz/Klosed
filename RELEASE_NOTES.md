@@ -12,6 +12,7 @@ DeployBar 가 배포할 때 이 파일에서 '이 버전의 새로운 기능' �
 전날 장보기 알림이 빠지지 않습니다.
 위젯 이름과 설명이 한국어로 나옵니다.
 설정에서 문의하고 리뷰를 남길 수 있어요.
+개인정보 처리방침과 지원 페이지를 앱에서 엽니다.
 
 ### App Store (English)
 
@@ -19,6 +20,7 @@ Alerts now arrive at the exact time you set.
 The day before shopping alert is no longer skipped.
 The app is now fully translated into English.
 Send feedback and leave a review from Settings.
+Open the privacy policy and support page in the app.
 
 ### 개발 메모 (노출 안 함)
 
@@ -30,6 +32,10 @@ Send feedback and leave a review from Settings.
   가까운 날짜부터 60개까지만 등록하고 나머지는 다음 실행 때 다시 채운다.
 - `DontGoMartSpec.appStoreID` 선언 → 설정의 '리뷰 남기기' 가 시스템 팝업 대신
   실제 리뷰 작성 페이지로 간다.
+- App Store ID 오타: `6450679498` 은 존재하지 않는 앱이었다(실제는 `6450387984`).
+  ReviewManager 의 '리뷰 작성'·'앱스토어 열기' 가 그동안 죽은 링크로 갔다.
+- LeeoKit 2.6.0 → 3.7.1. 계약이 `legal`·`monetization` 을 강제해 Spec 을 다시 썼다
+  (`.free` + 개인정보·지원 링크). 옛 커피 권한 조회용 페이월 구성은 SupporterManager 로 옮겼다.
 - 다국어: 영어가 빠져 있던 84개 문자열 번역(후원·공유·커스텀 마트·접근성 라벨),
   위젯 갤러리 이름·설명 8개 한국어 추가, 영어 13건 `needs_review` → `translated`.
 

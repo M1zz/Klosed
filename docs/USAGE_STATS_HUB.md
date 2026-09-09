@@ -4,7 +4,7 @@
 같은 CloudKit 컨테이너(`iCloud.com.Ysoup.FeedbackHub`, public DB)에 쌓고,
 설정 ▸ 지원 ▸ 사용 통계에서 그대로 읽는다. 별도 서버 없음, 외부 분석 SDK 없음.
 
-- 전송·조회 엔진: LeeoKit `LeeoUsageReporter` / `LeeoUsageStatsView` (핀: **2.6.0**)
+- 전송·조회 엔진: LeeoKit `LeeoUsageReporter` / `LeeoUsageStatsView` (핀: **3.7.1**, upToNextMajor)
 - 계약: `DontGoMart/DontGoMartSpec.swift` (`LeeoAppSpec`)
 - 앱 정책(무엇을 언제 보낼지): `DontGoMart/Manager/UsageReporter.swift` (`AppUsage`)
 - 조회 화면: 설정 ▸ 지원 ▸ **사용 통계 (개발자)** — 마스터 모드에서만 보인다
@@ -14,7 +14,7 @@
 | 레코드 | 언제 | 내용 |
 |---|---|---|
 | `UsageSnapshot` | 앱을 열 때, 설치당 1건 upsert (12시간 쓰로틀) | 익명 설치 UUID, 앱 버전·플랫폼·OS·로케일, 실행 횟수, 주요 행동 수, 설치 후 경과일, 마지막 활동 시각, `metrics` JSON |
-| `UsageEvent` | 주요 행동 시, **이름당 6시간에 1건** | 이벤트 이름, 앱 버전·플랫폼, 익명 설치 UUID |
+| `UsageEvent` | 주요 행동 시, **이름당 6시간에 1건** | 이벤트 이름, 앱 버전·플랫폼, 익명 설치 UUID, 발생 시각(`occurredAt`) |
 | `Feedback` | 사용자가 피드백을 보낼 때 | LeeoKit 표준 피드백 (유형·내용·연락처는 사용자가 적은 것만) |
 
 `metrics` — 설치당 대략 지표, 전부 숫자:
@@ -77,6 +77,7 @@ https://icloud.developer.apple.com → `iCloud.com.Ysoup.FeedbackHub`
 2. **인덱스**:
    - `UsageSnapshot`: `recordName` **Queryable**
    - `UsageEvent`: `recordName` **Queryable** + `createdTimestamp` **Sortable**
+     (`occurredAt` 은 값만 저장하고 인덱스는 두지 않는다 — 지금은 조회에 안 쓴다)
    - `appId` 는 인덱스 없이 클라이언트에서 필터한다(인덱스 배포를 늘리지 않으려고).
 3. **Security Roles**: `_world` 는 create 만, read 제거.
    admin 역할에 read + 개발자 본인 userRecordName 등록.
@@ -108,11 +109,15 @@ Production 에 배포할 것. 순서가 뒤집히면 그 기간의 스냅샷은 
 
 같은 방법으로 다시 7번 탭하면 꺼진다. 사용자에게 노출되는 UI가 아니다.
 
-## LeeoKit 을 3.x 로 올릴 때
+## LeeoKit 판올림
 
-이 앱은 2.6.0 에 핀돼 있다. 3.x 로 올리면:
+3.7.1 로 올리면서 계약(`LeeoAppSpec`)이 `legal`·`monetization` 선언을 강제하게 됐다.
+`DontGoMartSpec` 은 `.free` + 개인정보·지원 링크로 선언했고, 옛 커피 권한 조회용
+`LeeoPaywallConfig` 는 Spec 이 아니라 `SupporterManager` 안에서 만든다 —
+무료 모델인데 페이월을 선언하면 Preflight 가 모순으로 잡는다.
 
-- `LeeoAppSpec` 이 `legal`·`monetization` 선언을 **강제**한다 → `DontGoMartSpec` 을 먼저 고쳐야 빌드된다.
-- 리포터가 이벤트 쓰로틀과 `occurredAt` 을 직접 다루므로, `AppUsage` 의 6시간 쓰로틀은
-  중복이 되어 걷어내도 된다.
-- `occurredAt` 은 새 필드다 — 위의 "순서 주의" 가 그대로 적용된다.
+계약이 어긋나면 `DontGoMartTests.specIsReleasable()` 이 실패한다. 다음에 LeeoKit 을
+올릴 때 이 테스트부터 보면 된다.
+
+⚠️ 이벤트 쓰로틀은 여전히 앱(`AppUsage`)이 건다. LeeoKit 리포터는 스냅샷만
+12시간으로 제한하고 이벤트는 부르는 대로 보낸다.
