@@ -129,19 +129,34 @@ struct PatternEditorView: View {
         case monthly = "매월 주차"
         var id: String { rawValue }
 
+        /// 세그먼트 라벨. rawValue 를 그대로 Text 에 넣으면 번역이 붙지 않으므로 여기서 조회한다.
+        var title: String {
+            switch self {
+            case .weekly:   return String(localized: "매주", defaultValue: "Weekly")
+            case .biweekly: return String(localized: "격주", defaultValue: "Every 2 weeks")
+            case .monthly:  return String(localized: "매월 주차", defaultValue: "By week of month")
+            }
+        }
+
         var guide: String {
             switch self {
-            case .weekly:   return "쉬는 요일을 고르면 매주 그 요일에 휴무로 반복돼요."
-            case .biweekly: return "첫 휴무일을 고르면 그 날부터 2주에 한 번씩 휴무로 반복돼요. (2·4주차와 달리 월과 무관하게 14일 간격)"
-            case .monthly:  return "매월 정해진 주차·요일에 휴무일 때 사용하세요. (예: 2·4주차 화요일)"
+            case .weekly:
+                return String(localized: "쉬는 요일을 고르면 매주 그 요일에 휴무로 반복돼요.",
+                              defaultValue: "Pick a weekday and it repeats as a closed day every week.")
+            case .biweekly:
+                return String(localized: "첫 휴무일을 고르면 그 날부터 2주에 한 번씩 휴무로 반복돼요. (2·4주차와 달리 월과 무관하게 14일 간격)",
+                              defaultValue: "Pick the first closed day and it repeats every 2 weeks from then on. (Exactly 14 days apart, regardless of the month.)")
+            case .monthly:
+                return String(localized: "매월 정해진 주차·요일에 휴무일 때 사용하세요. (예: 2·4주차 화요일)",
+                              defaultValue: "Use this when the store closes on set weeks each month. (e.g. 2nd and 4th Tuesday)")
             }
         }
     }
 
     private static let previewFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "ko_KR")
-        f.dateFormat = "M/d(E)"
+        // 요일은 앞의 "격주 수요일" 에서 이미 말하므로 날짜만 — 로케일이 9/13 / 13/9 순서를 정한다.
+        f.setLocalizedDateFormatFromTemplate("Md")
         return f
     }()
 
@@ -159,7 +174,7 @@ struct PatternEditorView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     Picker("휴무 방식", selection: $mode) {
-                        ForEach(PatternMode.allCases) { m in Text(m.rawValue).tag(m) }
+                        ForEach(PatternMode.allCases) { m in Text(m.title).tag(m) }
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal)
@@ -278,7 +293,7 @@ struct PatternEditorView: View {
             let names = weeklyWeekdays.sorted { $0.rawValue < $1.rawValue }
                 .map { $0.displayName }
                 .joined(separator: ", ")
-            return "매주 \(names)요일"
+            return String(format: String(localized: "매주 %@요일", defaultValue: "Every %@"), names)
 
         case .biweekly:
             let start = Calendar.current.startOfDay(for: biweeklyStart)
@@ -286,7 +301,8 @@ struct PatternEditorView: View {
             let dates = biweeklyPreviewDates(from: start, count: 3)
                 .map { Self.previewFormatter.string(from: $0) }
                 .joined(separator: ", ")
-            return "격주 \(wd.displayName)요일 · \(dates) …"
+            return String(format: String(localized: "격주 %1$@요일 · %2$@ …", defaultValue: "Every other %1$@ · %2$@ …"),
+                          wd.displayName, dates)
 
         case .monthly:
             guard !selectedCells.isEmpty else { return nil }
@@ -295,11 +311,12 @@ struct PatternEditorView: View {
             let texts = groups.keys.sorted { $0.rawValue < $1.rawValue }.map { weekday -> String in
                 let weeks = groups[weekday] ?? []
                 if weeks.count == WeekOfMonth.allCases.count {
-                    return "매주 \(weekday.displayName)요일"
+                    return String(format: String(localized: "매주 %@요일", defaultValue: "Every %@"), weekday.displayName)
                 }
                 let weekText = weeks.sorted { $0.rawValue < $1.rawValue }
                     .map { "\($0.rawValue)" }.joined(separator: ",")
-                return "\(weekText)주 \(weekday.displayName)요일"
+                return String(format: String(localized: "%1$@주 %2$@요일", defaultValue: "Week %1$@ · %2$@"),
+                              weekText, weekday.displayName)
             }
             return texts.joined(separator: " / ")
         }

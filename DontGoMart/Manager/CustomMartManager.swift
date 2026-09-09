@@ -95,7 +95,8 @@ class CustomMartManager: ObservableObject {
                 let task = MetaMartsClosedDays(
                     type: .custom(id: customMart.id.uuidString),
                     task: [MartCloseData(
-                        title: "\(customMart.name) 휴무일"
+                        title: String(format: String(localized: "%@ 휴무일",
+                                                    defaultValue: "%@ closed"), customMart.name)
                     )],
                     taskDate: date
                 )

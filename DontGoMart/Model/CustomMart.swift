@@ -16,7 +16,7 @@ enum WeekOfMonth: Int, Codable, CaseIterable {
     case fifth = 5
 
     var displayName: String {
-        return "\(rawValue)주차"
+        String(format: String(localized: "%lld주차", defaultValue: "Week %lld"), rawValue)
     }
 }
 
@@ -30,28 +30,19 @@ enum Weekday: Int, Codable, CaseIterable {
     case friday = 6
     case saturday = 7
 
+    /// 요일 한 글자(한국어 "일", 영어 "Sun"). 사용자 로케일의 캘린더 심볼을 그대로 쓴다 —
+    /// 하드코딩하면 영어 화면에 한글 요일이 그대로 노출된다.
     var displayName: String {
-        switch self {
-        case .sunday: return "일"
-        case .monday: return "월"
-        case .tuesday: return "화"
-        case .wednesday: return "수"
-        case .thursday: return "목"
-        case .friday: return "금"
-        case .saturday: return "토"
-        }
+        let symbols = Calendar.current.shortWeekdaySymbols
+        let index = rawValue - 1
+        return symbols.indices.contains(index) ? symbols[index] : ""
     }
 
+    /// 요일 전체 이름(한국어 "일요일", 영어 "Sunday"). VoiceOver 라벨 등 문장에 쓴다.
     var fullName: String {
-        switch self {
-        case .sunday: return "일요일"
-        case .monday: return "월요일"
-        case .tuesday: return "화요일"
-        case .wednesday: return "수요일"
-        case .thursday: return "목요일"
-        case .friday: return "금요일"
-        case .saturday: return "토요일"
-        }
+        let symbols = Calendar.current.weekdaySymbols
+        let index = rawValue - 1
+        return symbols.indices.contains(index) ? symbols[index] : displayName
     }
 
     /// Calendar.component(.weekday) 값(1=일 … 7=토)으로 Weekday 를 얻는다.
@@ -98,10 +89,10 @@ struct ClosurePattern: Hashable, Identifiable {
         self.anchorDate = anchorDate
     }
 
+    /// 격주 기준일 표기(9/13). 한국어를 하드코딩하지 않고 사용자 로케일의 월·일 순서를 따른다.
     private static let anchorFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "ko_KR")
-        f.dateFormat = "M/d"
+        f.setLocalizedDateFormatFromTemplate("Md")
         return f
     }()
 
@@ -109,18 +100,23 @@ struct ClosurePattern: Hashable, Identifiable {
         switch frequency {
         case .biweekly:
             if let anchor = anchorDate {
-                return "격주 \(weekday.displayName)요일 · \(Self.anchorFormatter.string(from: anchor)) 시작"
+                return String(format: String(localized: "격주 %1$@요일 · %2$@ 시작",
+                                             defaultValue: "Every other %1$@ · from %2$@"),
+                              weekday.displayName, Self.anchorFormatter.string(from: anchor))
             }
-            return "격주 \(weekday.displayName)요일"
+            return String(format: String(localized: "격주 %@요일", defaultValue: "Every other %@"),
+                          weekday.displayName)
         case .weekOfMonth:
             // 모든 주차가 선택되면 '매주'로 간결하게 표시 (매주 화요일 등)
             if weeks.count == WeekOfMonth.allCases.count {
-                return "매주 \(weekday.displayName)요일"
+                return String(format: String(localized: "매주 %@요일", defaultValue: "Every %@"),
+                              weekday.displayName)
             }
             let weekText = weeks.sorted(by: { $0.rawValue < $1.rawValue })
                 .map { $0.displayName }
                 .joined(separator: ", ")
-            return "\(weekText) \(weekday.displayName)요일"
+            return String(format: String(localized: "%1$@ %2$@요일", defaultValue: "%1$@ · %2$@"),
+                          weekText, weekday.displayName)
         }
     }
 }

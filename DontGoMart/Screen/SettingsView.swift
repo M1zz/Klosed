@@ -448,12 +448,16 @@ struct SettingsView: View {
 
     /// 현재 알림 설정을 사람이 읽기 좋은 한 줄로.
     private var notificationDescription: String {
-        var text = "휴무일 \(notificationLeadDays)일 전"
+        // 문장을 조각내어 이어 붙이면 번역이 불가능하므로, 완성된 문장 두 개 중 하나를 고른다.
+        let time = String(format: "%02d:%02d", notificationHour, notificationMinute)
         if beforeDayNotificationEnabled {
-            text += ", 전날"
+            return String(format: String(localized: "휴무일 %1$lld일 전과 전날 %2$@에 알림이 전송됩니다.",
+                                         defaultValue: "You'll be notified %1$lld days before and the day before, at %2$@."),
+                          notificationLeadDays, time)
         }
-        text += String(format: "에 %02d:%02d 알림이 전송됩니다.", notificationHour, notificationMinute)
-        return text
+        return String(format: String(localized: "휴무일 %1$lld일 전 %2$@에 알림이 전송됩니다.",
+                                     defaultValue: "You'll be notified %1$lld days before, at %2$@."),
+                      notificationLeadDays, time)
     }
 
     // MARK: - Private Methods

@@ -222,8 +222,7 @@ struct ClosedDayCalendarView: View {
     }
 
     private func yearMonth() -> (year: String, month: String) {
-        var calendar = Calendar.current
-        calendar.locale = Locale(identifier: "ko_KR")
+        let calendar = Calendar.current
         let date = monthDate()
         let month = calendar.component(.month, from: date) - 1
         let year = calendar.component(.year, from: date)

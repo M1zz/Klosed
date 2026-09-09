@@ -553,7 +553,11 @@ struct ClosedDaysView: View {
         let weekdayIndex = calendar.component(.weekday, from: date) // 1 = 일요일
         let weekdaySymbol = Weekday.symbol(calendarWeekday: weekdayIndex)
         let isSunday = weekdayIndex == 1
-        let monthText = "\(calendar.component(.month, from: date))월"
+        // "9월" / "Sep" — 로케일의 축약 월 이름을 그대로 쓴다 (하드코딩하면 영어 화면에 "9월"이 남는다)
+        let monthIndex = calendar.component(.month, from: date) - 1
+        let monthText = calendar.shortMonthSymbols.indices.contains(monthIndex)
+            ? calendar.shortMonthSymbols[monthIndex]
+            : "\(monthIndex + 1)"
         let isSoon = days <= 3
 
         return HStack(spacing: 14) {
@@ -657,11 +661,12 @@ struct ClosedDaysView: View {
         let today = calendar.startOfDay(for: Date())
         let selected = martSelection.getSelectedMartTypes()
 
-        var lines: [String] = ["🛒 돈꼬마트"]
+        var lines: [String] = ["🛒 " + String(localized: "돈꼬마트", defaultValue: "DontGoMart")]
 
         guard !selected.isEmpty else {
             lines.append("")
-            lines.append("설정에서 마트를 선택하면 휴무일을 확인할 수 있어요.")
+            lines.append(String(localized: "설정에서 마트를 선택하면 휴무일을 확인할 수 있어요.",
+                                defaultValue: "Choose a store in Settings to see its closed days."))
             return lines.joined(separator: "\n")
         }
 
@@ -671,29 +676,34 @@ struct ClosedDaysView: View {
         }
         lines.append("")
         if todayClosed.isEmpty {
-            lines.append("오늘은 영업해요 ✅")
+            lines.append(String(localized: "오늘은 영업해요 ✅", defaultValue: "Open today ✅"))
         } else if todayClosed.count == selected.count {
-            lines.append("오늘은 휴무예요 🚫")
+            lines.append(String(localized: "오늘은 휴무예요 🚫", defaultValue: "Closed today 🚫"))
         } else {
             let names = todayClosed.map { $0.type.displayName }.joined(separator: ", ")
-            lines.append("오늘 일부 휴무: \(names) ⚠️")
+            lines.append(String(format: String(localized: "오늘 일부 휴무: %@ ⚠️",
+                                               defaultValue: "Some closed today: %@ ⚠️"), names))
         }
 
         // 다가오는 휴무일 (가까운 3건)
         let groups = upcomingGroups()
         if !groups.isEmpty {
             lines.append("")
-            lines.append("다가오는 휴무일")
+            lines.append(String(localized: "다가오는 휴무일", defaultValue: "Upcoming closed days"))
             for group in groups.prefix(3) {
-                let month = calendar.component(.month, from: group.date)
-                let day = calendar.component(.day, from: group.date)
                 let names = group.marts.map { $0.type.displayName }.joined(separator: ", ")
-                lines.append("· \(relativeDayPhrase(date: group.date, days: group.days)) (\(month)월 \(day)일) — \(names) 휴무")
+                // 날짜는 "9월 13일" / "Sep 13" 처럼 로케일이 정하는 표기를 그대로 쓴다.
+                let dateText = group.date.formatted(.dateTime.month().day())
+                lines.append("· " + String(format: String(localized: "%1$@ (%2$@) — %3$@ 휴무",
+                                                          defaultValue: "%1$@ (%2$@) — %3$@ closed"),
+                                           relativeDayPhrase(date: group.date, days: group.days),
+                                           dateText, names))
             }
         }
 
         lines.append("")
-        lines.append("마트 휴무일, 돈꼬마트로 미리 확인하세요.")
+        lines.append(String(localized: "마트 휴무일, 돈꼬마트로 미리 확인하세요.",
+                            defaultValue: "Check store closing days ahead of time with DontGoMart."))
         return lines.joined(separator: "\n")
     }
 
