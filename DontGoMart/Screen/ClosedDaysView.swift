@@ -34,6 +34,7 @@ struct ClosedDaysView: View {
                         if sharePayload != nil {
                             Button(action: {
                                 ReviewManager.trackMeaningfulAction()
+                                AppUsage.log(.share)
                                 isShowingShareCard = true
                             }) {
                                 HStack(spacing: 5) {
@@ -488,6 +489,7 @@ struct ClosedDaysView: View {
         Button(action: {
             isShowingCalendar = true
             ReviewManager.trackMeaningfulAction()
+            AppUsage.log(.calendar)
         }) {
             HStack(spacing: 12) {
                 Image(systemName: "calendar")

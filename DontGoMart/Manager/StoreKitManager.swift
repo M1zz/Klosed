@@ -238,6 +238,7 @@ final class CoffeeTipStore: ObservableObject {
     private func celebrate(productID: String) {
         lastTippedProductID = productID
         celebrationCount += 1
+        AppUsage.log(.tip)
         UINotificationFeedbackGenerator().notificationOccurred(.success)
         UIAccessibility.post(
             notification: .announcement,

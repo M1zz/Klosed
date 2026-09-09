@@ -113,6 +113,7 @@ struct CustomMartEditView: View {
             customMartManager.addCustomMart(newMart)
         }
 
+        AppUsage.log(.customMartSaved)
         dismiss()
     }
 }

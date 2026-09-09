@@ -38,6 +38,9 @@ struct DontGoMartApp: App {
                     Task {
                         await SupporterManager.refresh()
                     }
+
+                    // 익명 사용 스냅샷 (피드백과 같은 CloudKit 허브로, 12시간에 한 번)
+                    AppUsage.reportSnapshot()
                 }
         }
         .onChange(of: scenePhase) { _, newPhase in

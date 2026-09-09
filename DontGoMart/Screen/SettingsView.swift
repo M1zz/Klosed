@@ -31,6 +31,10 @@ struct SettingsView: View {
     @State private var showingCustomMartEditor = false
     @State private var editingCustomMart: CustomMart? = nil
 
+    /// 개발자(마스터) 모드 — LeeoSupportSection 의 '버전' 행을 7번 탭하면 켜진다.
+    /// 켜져 있을 때만 접수된 피드백·사용 통계 진입점이 보인다. 키 이름은 LeeoKit 과 같아야 한다.
+    @AppStorage("dev.masterMode") private var isMasterMode = false
+
     var body: some View {
         NavigationStack {
             Form {
@@ -43,6 +47,13 @@ struct SettingsView: View {
                 supportSection
                 Section {
                     LeeoSupportSection<DontGoMartSpec>()
+                    if isMasterMode {
+                        NavigationLink {
+                            LeeoUsageStatsView<DontGoMartSpec>()
+                        } label: {
+                            Label("사용 통계 (개발자)", systemImage: "chart.bar.xaxis")
+                        }
+                    }
                 } header: {
                     Text("지원")
                 }
@@ -285,6 +296,7 @@ struct SettingsView: View {
             set: { _ in
                 martSelection.toggleMart(martType)
                 WidgetManager.shared.updateWidget()
+                AppUsage.log(.martChanged)
             }
         )) {
             HStack {
@@ -469,6 +481,7 @@ struct SettingsView: View {
 
             if status == .authorized {
                 await notificationManager.setupSmartNotifications(for: tasks)
+                AppUsage.log(.notificationOn)
                 debugLog("✅ [SettingsView] 알림이 활성화되었습니다.")
             } else if status == .denied {
                 isNotificationEnabled = false
