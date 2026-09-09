@@ -29,17 +29,38 @@ final class NotificationManager {
         return leadDayPresets.contains(stored) ? stored : defaultLeadDays
     }
 
-    /// 사용자 설정 알림 시간 가져오기
+    /// 기본 알림 시각 — 설정 화면(@AppStorage)의 기본값과 반드시 같아야 한다.
+    static let defaultNotificationHour = 9
+    static let defaultNotificationMinute = 0
+
+    /// 사용자 설정 알림 시간 가져오기.
+    ///
+    /// `integer(forKey:)` 는 값이 없을 때 0 을 돌려주므로 `?? 9` 로는 기본값을 줄 수 없다.
+    /// (설정 화면은 @AppStorage 기본값 09:00 을 보여주는데 실제 알림은 00:00 에 가던 버그)
+    /// 저장된 적이 있는지 `object(forKey:)` 로 먼저 확인한다.
     var notificationHour: Int {
-        UserDefaults(suiteName: Utillity.appGroupId)?.integer(forKey: AppStorageKeys.notificationHour) ?? 9
+        storedInt(AppStorageKeys.notificationHour, default: Self.defaultNotificationHour)
     }
 
     var notificationMinute: Int {
-        UserDefaults(suiteName: Utillity.appGroupId)?.integer(forKey: AppStorageKeys.notificationMinute) ?? 0
+        storedInt(AppStorageKeys.notificationMinute, default: Self.defaultNotificationMinute)
     }
 
+    /// 전날 '장보기 좋은 날' 알림. 설정 화면 기본값이 켜짐이므로 저장 전에도 켜짐으로 읽는다.
+    /// (`bool(forKey:)` 는 값이 없으면 false 라, 화면은 켜짐인데 알림은 안 오던 버그)
     var beforeDayNotificationEnabled: Bool {
-        UserDefaults(suiteName: Utillity.appGroupId)?.bool(forKey: AppStorageKeys.beforeDayNotificationEnabled) ?? true
+        let defaults = UserDefaults(suiteName: Utillity.appGroupId)
+        guard let defaults, defaults.object(forKey: AppStorageKeys.beforeDayNotificationEnabled) != nil else {
+            return true
+        }
+        return defaults.bool(forKey: AppStorageKeys.beforeDayNotificationEnabled)
+    }
+
+    /// 저장된 적 없는 키는 0 이 아니라 기본값으로 읽는다.
+    private func storedInt(_ key: String, default fallback: Int) -> Int {
+        let defaults = UserDefaults(suiteName: Utillity.appGroupId)
+        guard let defaults, defaults.object(forKey: key) != nil else { return fallback }
+        return defaults.integer(forKey: key)
     }
     
     // MARK: - Notification Types
@@ -170,8 +191,15 @@ final class NotificationManager {
             ? NotificationType.allCases
             : [.primary]
 
-        for task in tasks {
+        // 가까운 날짜부터 채우고 안전 임계값에서 멈춘다.
+        // (iOS 는 앱당 64개까지만 보관한다 — 넘기면 OS 가 조용히 버려서
+        //  '가끔 알림이 안 온다' 로 보인다. 먼 미래를 포기하고 가까운 날을 지킨다.)
+        outer: for task in tasks {
             for notificationType in types {
+                guard scheduledCount < Constants.maxSafeNotificationCount else {
+                    debugLog("ℹ️ 알림 상한(\(Constants.maxSafeNotificationCount)개) 도달 — 이후 휴무일은 앱 실행 시 다시 채웁니다.")
+                    break outer
+                }
                 let success = await scheduleNotification(
                     for: task.taskDate,
                     type: notificationType,
