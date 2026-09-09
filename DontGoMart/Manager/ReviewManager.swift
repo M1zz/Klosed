@@ -15,8 +15,9 @@ enum ReviewManager {
     private static let meaningfulActionsCountKey = "meaningfulActionsCount"
     private static let hasRequestedReviewKey = "hasRequestedReview"
 
-    // App Store ID - 앱스토어 출시 후 실제 ID로 교체 필요
-    private static let appStoreId = "6450679498"
+    // App Store ID — DontGoMartSpec 과 같은 값을 써야 한다(두 곳에 다른 ID 가 있으면
+    // 한쪽은 반드시 죽은 링크가 된다).
+    private static let appStoreId = "6450387984"
 
     // 리뷰 요청 조건
     private static let minimumAppOpens = 5
